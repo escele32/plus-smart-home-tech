@@ -2,6 +2,7 @@ package ru.yandex.practicum.kafka;
 
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.io.BinaryEncoder;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.io.EncoderFactory;
@@ -16,6 +17,7 @@ import java.io.IOException;
 
 import static java.lang.String.format;
 
+@Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class GeneralAvroSerializer implements Serializer<SpecificRecordBase> {
     final EncoderFactory encoderFactory = EncoderFactory.get();
@@ -34,6 +36,7 @@ public class GeneralAvroSerializer implements Serializer<SpecificRecordBase> {
             }
             return result;
         } catch (IOException exception) {
+            log.warn("Ошибка сериализации данных для топика {}", topic);
             throw new SerializationException(format("Ошибка сериализации данных для топика %s", topic), exception);
         }
     }
