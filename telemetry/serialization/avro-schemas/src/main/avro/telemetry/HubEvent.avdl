@@ -1,4 +1,86 @@
 @namespace("ru.yandex.practicum.kafka.telemetry.event")
 protocol HubEventProtocol {
 
+	// перечисление, описывающее типы устройств
+	enum DeviceTypeAvro {
+		MOTION_SENSOR, // датчик движения
+		TEMPERATURE_SENSOR, // датчик температуры
+		LIGHT_SENSOR, // датчик освещения
+		CLIMATE_SENSOR, // датчик климата
+		SWITCH_SENSOR // датчик переключения
+	}
+
+	// перечисление, описывающее типы условий для сценариев
+	enum ConditionTypeAvro {
+		MOTION, // движение
+		LUMINOSITY, // освещение
+		SWITCH, // переключатель
+		TEMPERATURE, // температура
+		CO2LEVEL, // уровень СО2
+		HUMIDITY // влажность
+	}
+
+	// перечисление, описывающее операторы, которые допустимы для построения условий
+	enum ConditionOperationAvro {
+		EQUALS, // равняется
+		GREATER_THAN, // большие, чем
+		LOWER_THAN // меньше, чем
+	}
+
+	//перечисление, описывающее типы действий
+	enum ActionTypeAvro {
+		ACTIVATE, // активировать
+		DEACTIVATE, // деактивировать
+		INVERSE, // инверсия
+		SET_VALUE // установить значение
+	}
+
+	// запись, описывающая событие добавления устройства
+	record DeviceAddedEventAvro {
+		string id; // уникальный идентификатор устройства
+		DeviceTypeAvro type;// тип устройства
+	}
+
+	// запись, описывающая событие удаления устройства
+	record DeviceRemovedEventAvro {
+		string id; // уникальный идентификатор устройства
+	}
+
+	// запись, описывающая условия активации сценария
+	record ScenarioConditionAvro {
+		string sensorId; // идентификатор устройства
+		ConditionTypeAvro type; // тип условия
+		ConditionOperationAvro operation; // операция, применяемая к условию
+		// значение для сравнения в условиях. Может быть не задано, если неприменимо (null) или равно целому числу или
+		// значению логического типа (boolean)
+		union { null, int, boolean } value;
+	}
+
+	// запись, описывающая действия, выполняемые устройством в рамках сценария
+	record DeviceActionAvro {
+		string sensorId; // идентификатор устройства
+		ActionTypeAvro type; // тип действия
+		int? value = null; // значение, устанавливаемое при выполнении действия (если применимо)
+	}
+
+	// запись, описывающая событие добавления сценария
+	record ScenarioAddedEventAvro {
+		string name; // уникальное название сценария
+		array<ScenarioConditionAvro> conditions; // набор условий активации сценария
+		array<DeviceActionAvro> actions; // набор действий, выполняемых при активации сценария
+	}
+
+	// запись, описывающая событие удаления сценария
+	record ScenarioRemovedEventAvro {
+		string name; // название сценария, уникальное в рамках хаба
+	}
+
+	// запись, описывающая событие, происходящее в хабе
+	record HubEventAvro {
+		string hubId; // идентификатор хаба
+		timestamp_ms timestamp; // метка времени события
+		// поле, содержащее одно из возможных событий (добавление/удаление устройства, добавление/удаление сценария)
+		union { DeviceAddedEventAvro, DeviceRemovedEventAvro, ScenarioAddedEventAvro, ScenarioRemovedEventAvro } payload;
+	}
+
 }
