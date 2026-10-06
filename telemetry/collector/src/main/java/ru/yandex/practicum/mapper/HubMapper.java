@@ -51,7 +51,7 @@ public class HubMapper {
                 .build();
     }
 
-    private Object mapPayload(HubEvent event) {
+    private Object mapHubType(HubEvent event) {
         return switch (event.getType()) {
             case DEVICE_ADDED -> mapDeviceAdded((DeviceAddedEvent) event);
             case DEVICE_REMOVED -> mapDeviceRemoved((DeviceRemovedEvent) event);
@@ -60,11 +60,11 @@ public class HubMapper {
         };
     }
 
-    public HubEventAvro mapToAvro(HubEvent event) {
+    public HubEventAvro mapToHubAvro(HubEvent event) {
         return HubEventAvro.newBuilder()
                 .setHubId(event.getHubId())
                 .setTimestamp(event.getTimestamp())
-                .setPayload(mapPayload(event))
+                .setPayload(mapHubType(event))
                 .build();
     }
 }

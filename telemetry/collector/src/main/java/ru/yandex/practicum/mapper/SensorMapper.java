@@ -43,7 +43,7 @@ public class SensorMapper {
                 .build();
     }
 
-    private Object mapPayload(SensorEvent event) {
+    private Object mapSensorType(SensorEvent event) {
         return switch (event.getType()) {
             case CLIMATE_SENSOR_EVENT -> mapClimate((ClimateSensor) event);
             case LIGHT_SENSOR_EVENT -> mapLight((LightSensor) event);
@@ -53,12 +53,12 @@ public class SensorMapper {
         };
     }
 
-    public SensorEventAvro mapToAvro(SensorEvent event) {
+    public SensorEventAvro mapToSensorAvro(SensorEvent event) {
         return SensorEventAvro.newBuilder()
                 .setId(event.getId())
                 .setHubId(event.getHubId())
                 .setTimestamp(event.getTimestamp())
-                .setPayload(mapPayload(event))
+                .setPayload(mapSensorType(event))
                 .build();
     }
 }

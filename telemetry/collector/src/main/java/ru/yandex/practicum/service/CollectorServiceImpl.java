@@ -18,11 +18,11 @@ public class CollectorServiceImpl implements CollectorService {
 
     @Override
     public void collectorHubEvent(HubEvent hubEvent) {
-        kafkaProducer.sendHubEvent(HubMapper.mapToAvro(hubEvent));
+        kafkaProducer.sendHubEvent(HubMapper.mapToHubAvro(hubEvent));
     }
 
     @Override
     public void collectorSensorEvent(SensorEvent sensorEvent) {
-        kafkaProducer.sendSensorEvent(SensorMapper.mapToAvro(sensorEvent));
+        kafkaProducer.sendSensorEvent(SensorMapper.mapToSensorAvro(sensorEvent));
     }
 }
