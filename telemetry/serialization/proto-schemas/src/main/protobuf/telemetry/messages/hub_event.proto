@@ -2,5 +2,97 @@ syntax = "proto3";
 
 package telemetry.message.event;
 
+import "google/protobuf/timestamp.proto";
+
 option java_multiple_files = true;
 option java_package = "ru.yandex.practicum.grpc.telemetry.event";
+
+// перечисление, описывающее типы устройств
+enum DeviceTypeProto {
+  MOTION_SENSOR = 0; // датчик движения
+  TEMPERATURE_SENSOR = 1; // датчик температуры
+  LIGHT_SENSOR = 2; // датчик освещения
+  CLIMATE_SENSOR = 3; // датчик климата
+  SWITCH_SENSOR = 4; // датчик переключения
+}
+
+// перечисление, описывающее типы условий для сценариев
+enum ConditionTypeProto {
+  MOTION = 0; // движение
+  LUMINOSITY = 1; // освещение
+  SWITCH = 2; // переключатель
+  TEMPERATURE = 3; // температура
+  CO2LEVEL = 4; // уровень СО2
+  HUMIDITY = 5; // влажность
+}
+
+// перечисление, описывающее операторы, которые допустимы для построения условий
+enum ConditionOperationProto {
+  EQUALS = 0; // равняется
+  GREATER_THAN = 1; // большие, чем
+  LOWER_THAN = 2; // меньше, чем
+}
+
+//перечисление, описывающее типы действий
+enum ActionTypeProto {
+  ACTIVATE = 0; // активировать
+  DEACTIVATE = 1; // деактивировать
+  INVERSE = 2; // инверсия
+  SET_VALUE = 3; // установить значение
+}
+
+// запись, описывающая событие добавления устройства
+message DeviceAddedEventProto {
+  string id = 1; // уникальный идентификатор устройства
+  DeviceTypeProto type = 2;// тип устройства
+}
+
+// запись, описывающая событие удаления устройства
+message DeviceRemovedEventProto {
+  string id = 1; // уникальный идентификатор устройства
+}
+
+// запись, описывающая условия активации сценария
+message ScenarioConditionProto {
+  string sensor_id = 1; // идентификатор устройства
+  ConditionTypeProto type = 2; // тип условия
+  ConditionOperationProto operation = 3; // операция, применяемая к условию
+  // значение для сравнения в условиях. Может быть не задано, если неприменимо (null) или равно целому числу или
+  // значению логического типа (boolean)
+  oneof value {
+    bool bool_value = 4;
+    int32 int_value = 5;
+  }
+}
+
+// запись, описывающая действия, выполняемые устройством в рамках сценария
+message DeviceActionProto {
+  string sensor_id = 1; // идентификатор устройства
+  ActionTypeProto type = 2; // тип действия
+  optional int32 value = 3; // значение, устанавливаемое при выполнении действия (если применимо)
+}
+
+// запись, описывающая событие добавления сценария
+message ScenarioAddedEventProto {
+  string name = 1; // уникальное название сценария
+  repeated ScenarioConditionProto condition = 2; // набор условий активации сценария
+  repeated DeviceActionProto action = 3; // набор действий, выполняемых при активации сценария
+}
+
+// запись, описывающая событие удаления сценария
+message ScenarioRemovedEventProto {
+  string name = 1; // название сценария, уникальное в рамках хаба
+}
+
+// запись, описывающая событие, происходящее в хабе
+message HubEventProto {
+  string hub_id = 1; // идентификатор хаба
+  google.protobuf.Timestamp timestamp = 2; // метка времени события
+  // поле, содержащее одно из возможных событий (добавление/удаление устройства, добавление/удаление сценария)
+  oneof payload {
+    DeviceAddedEventProto device_added = 3;
+    DeviceRemovedEventProto device_removed = 4;
+    ScenarioAddedEventProto scenario_added = 5;
+    ScenarioRemovedEventProto scenario_removed = 6;
+  }
+}

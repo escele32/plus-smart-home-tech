@@ -19,8 +19,6 @@ public class KafkaClientConfiguration {
         return new KafkaClient() {
             private Producer<String, SpecificRecordBase> producer;
 
-
-
             private void initProducer() {
                 Properties config = new Properties();
                 config.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
