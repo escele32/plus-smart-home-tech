@@ -32,7 +32,7 @@ public class SnapshotAggregator {
         SensorsSnapshotAvro snapshot = snapshots.computeIfAbsent(hubId, k -> {
             SensorsSnapshotAvro sensorsSnapshot = new SensorsSnapshotAvro();
             sensorsSnapshot.setHubId(hubId);
-            sensorsSnapshot.setTimestamp(Instant.now());
+            sensorsSnapshot.setTimestamp(event.getTimestamp());
             sensorsSnapshot.setSensorsState(new HashMap<>());
             return sensorsSnapshot;
         });
