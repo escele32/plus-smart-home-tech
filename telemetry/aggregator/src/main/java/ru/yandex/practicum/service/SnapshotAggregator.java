@@ -25,12 +25,6 @@ public class SnapshotAggregator {
     Map<String, SensorsSnapshotAvro> snapshots = new ConcurrentHashMap<>();
     SensorStateConverter converter;
 
-    private boolean equalsUnion(Object object, Object compared) {
-        if (object == null && compared == null) return true;
-        if (object == null || compared == null) return false;
-        return object.equals(compared);
-    }
-
     public Optional<SensorsSnapshotAvro> updateState(SensorEventAvro event) {
         String hubId = event.getHubId();
         String deviceId = event.getId();
@@ -38,7 +32,7 @@ public class SnapshotAggregator {
         SensorsSnapshotAvro snapshot = snapshots.computeIfAbsent(hubId, k -> {
             SensorsSnapshotAvro sensorsSnapshot = new SensorsSnapshotAvro();
             sensorsSnapshot.setHubId(hubId);
-            sensorsSnapshot.setTimestamp(null); // пока нет событий — null
+            sensorsSnapshot.setTimestamp(Instant.now());
             sensorsSnapshot.setSensorsState(new HashMap<>());
             return sensorsSnapshot;
         });

@@ -1,6 +1,5 @@
 package ru.yandex.practicum.kafka;
 
-import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
