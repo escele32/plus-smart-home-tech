@@ -1,4 +1,4 @@
-package ru.yandex.practicum;
+package ru.yandex.practicum.service;
 
 import com.google.protobuf.Empty;
 import com.google.protobuf.Timestamp;
