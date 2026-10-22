@@ -10,7 +10,6 @@ import static java.lang.String.format;
 @Component
 public class SensorStateConverter {
 
-    @SuppressWarnings("unchecked")
     public SensorStateAvro toSensorState(SensorEventAvro event) {
         SensorStateAvro state = new SensorStateAvro();
         state.setTimestamp(event.getTimestamp());
@@ -18,7 +17,9 @@ public class SensorStateConverter {
         Object payload = event.getPayload();
         if (payload == null) {
             log.warn("Событие с id={} равно null", event.getId());
-            return null;
+            throw new IllegalArgumentException(
+                    format("У события с id=%s отсутствует payload", event.getId())
+            );
         }
 
         if (payload instanceof ClimateSensorAvro) {

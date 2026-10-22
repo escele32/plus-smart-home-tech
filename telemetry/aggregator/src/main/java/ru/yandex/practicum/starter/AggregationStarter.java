@@ -26,80 +26,105 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AggregationStarter {
-
     KafkaClient kafkaClient;
     SnapshotAggregator aggregator;
 
-    /**
-     * Метод для начала процесса агрегации данных.
-     * Подписывается на топик telemetry.sensors.v1, читает события,
-     * формирует снапшоты и отправляет их в telemetry.snapshots.v1.
-     */
     public void start() {
         Consumer<String, SensorEventAvro> consumer = kafkaClient.getConsumer();
         Producer<String, SensorsSnapshotAvro> producer = kafkaClient.getProducer();
 
-        // Подписываемся на нужный топик
+        if (consumer == null || producer == null) {
+            log.error("Kafka client вернул null Consumer или Producer. Проверьте конфигурацию KafkaClient.");
+            return;
+        }
+
         consumer.subscribe(List.of("telemetry.sensors.v1"));
         log.info("Aggregator подписан на топик telemetry.sensors.v1");
 
         try {
             while (true) {
-                // Poll с таймаутом 100 мс
-                ConsumerRecords<String, SensorEventAvro> records = consumer.poll(Duration.ofMillis(100));
+                ConsumerRecords<String, SensorEventAvro> records = consumer.poll(Duration.ofMillis(200));
 
+                int processedCount = 0;
                 for (ConsumerRecord<String, SensorEventAvro> record : records) {
                     SensorEventAvro event = record.value();
                     if (event == null) {
+                        log.warn("Пропущена запись с пустым событием: partition={}, offset={}",
+                                record.partition(), record.offset());
                         continue;
                     }
 
-                    // Обновляем снапшот по событию
                     Optional<SensorsSnapshotAvro> updated = aggregator.updateState(event);
-                    if (!updated.isPresent()) {
-                        // Состояние не изменилось — ничего не отправляем
+                    if (updated.isEmpty()) {
                         continue;
                     }
 
                     SensorsSnapshotAvro snapshot = updated.get();
-                    String key = snapshot.getHubId(); // ключ — hubId
+                    String key = snapshot.getHubId();
+                    if (key == null) {
+                        log.warn("Снапшот имеет null hubId, пропускаем отправку: offset={}", record.offset());
+                        continue;
+                    }
 
-                    ProducerRecord<String, SensorsSnapshotAvro> pr =
+                    ProducerRecord<String, SensorsSnapshotAvro> output =
                             new ProducerRecord<>("telemetry.snapshots.v1", key, snapshot);
 
-                    producer.send(pr, (metadata, exception) -> {
+                    producer.send(output, (metadata, exception) -> {
                         if (exception != null) {
-                            log.error("Не удалось отправить снапшот для hubId={}", key, exception);
+                            log.error("Не удалось отправить снапшот для hubId={}, offset потребителя={}",
+                                    key, record.offset(), exception);
+                            // Здесь можно добавить логику повторной попытки или dead-letter
                         } else {
-                            log.debug("Снапшот отправлен: hubId={}, offset={}", key, metadata.offset());
+                            log.debug("Снапшот отправлен: hubId={}, partition={}, offset={}",
+                                    key, metadata.partition(), metadata.offset());
                         }
                     });
+
+                    processedCount++;
                 }
 
-                // Ручной коммит оффсетов (если в KafkaConfig auto-commit=false)
-                consumer.commitSync();
+                if (!records.isEmpty()) {
+                    consumer.commitSync();
+                    log.trace("Коммит оффсетов после обработки {} записей", processedCount);
+                }
             }
         } catch (WakeupException ignored) {
             log.info("Получен WakeupException — инициировано завершение агрегатора");
-        } catch (Exception e) {
-            log.error("Ошибка во время обработки событий от датчиков", e);
+        } catch (Exception exception) {
+            log.error("Критическая ошибка во время обработки событий от датчиков", exception);
         } finally {
-            try {
-                // Сначала flush продюсера — чтобы все сообщения ушли в Kafka
+            shutdownSafely(consumer, producer);
+        }
+    }
+
+    private void shutdownSafely(Consumer<?, ?> consumer, Producer<?, ?> producer) {
+        try {
+            if (producer != null) {
                 producer.flush();
                 log.info("Буфер продюсера сброшен (flush)");
+            }
+        } catch (Exception exception) {
+            log.warn("Ошибка при flush продюсера", exception);
+        }
 
-                // Потом коммит оставшихся оффсетов
+        try {
+            if (consumer != null) {
                 consumer.commitSync();
                 log.info("Оффсеты зафиксированы (commitSync)");
-            } catch (Exception flushOrCommitEx) {
-                log.warn("Ошибка при flush продюсера или commit консьюмера", flushOrCommitEx);
-            } finally {
-                log.info("Закрываем консьюмер");
                 consumer.close();
-                log.info("Закрываем продюсер");
-                producer.close();
+                log.info("Консьюмер закрыт");
             }
+        } catch (Exception exception) {
+            log.warn("Ошибка при commit/close консьюмера", exception);
+        }
+
+        try {
+            if (producer != null) {
+                producer.close();
+                log.info("Продюсер закрыт");
+            }
+        } catch (Exception exception) {
+            log.warn("Ошибка при закрытии продюсера", exception);
         }
     }
 }
