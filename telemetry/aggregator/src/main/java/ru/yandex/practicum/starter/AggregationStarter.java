@@ -16,6 +16,7 @@ import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
 import ru.yandex.practicum.kafka.telemetry.event.SensorsSnapshotAvro;
 import ru.yandex.practicum.service.SnapshotAggregator;
 import ru.yandex.practicum.kafka.KafkaClient;
+import ru.yandex.practicum.util.KafkaTopics;
 
 import java.time.Duration;
 import java.util.List;
@@ -38,8 +39,8 @@ public class AggregationStarter {
             return;
         }
 
-        consumer.subscribe(List.of("telemetry.sensors.v1"));
-        log.info("Aggregator подписан на топик telemetry.sensors.v1");
+        consumer.subscribe(List.of(KafkaTopics.TELEMETRY_SENSORS_V1));
+        log.info("Aggregator подписан на топик {}", KafkaTopics.TELEMETRY_SENSORS_V1);
 
         try {
             while (true) {
@@ -67,7 +68,7 @@ public class AggregationStarter {
                     }
 
                     ProducerRecord<String, SensorsSnapshotAvro> output =
-                            new ProducerRecord<>("telemetry.snapshots.v1", key, snapshot);
+                            new ProducerRecord<>(KafkaTopics.TELEMETRY_SNAPSHOTS_V1, key, snapshot);
 
                     producer.send(output, (metadata, exception) -> {
                         if (exception != null) {
