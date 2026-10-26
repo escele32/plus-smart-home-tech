@@ -24,14 +24,14 @@ public class AvroSerializer implements Serializer<SpecificRecordBase> {
 
     @Override
     public byte[] serialize(String topic, SpecificRecordBase data) {
-        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             byte[] result = null;
-            encoder = encoderFactory.binaryEncoder(out, encoder);
+            encoder = encoderFactory.binaryEncoder(outputStream, encoder);
             if (data != null) {
                 DatumWriter<SpecificRecordBase> writer = new SpecificDatumWriter<>(data.getSchema());
                 writer.write(data, encoder);
                 encoder.flush();
-                result = out.toByteArray();
+                result = outputStream.toByteArray();
             }
             return result;
         } catch (IOException exception) {

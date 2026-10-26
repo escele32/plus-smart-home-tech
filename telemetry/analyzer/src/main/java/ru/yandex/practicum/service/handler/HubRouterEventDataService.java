@@ -26,15 +26,15 @@ public class HubRouterEventDataService {
         if (action.getValue() != null) {
             actionProto.setValue(action.getValue());
         }
-        Instant time = Instant.now();
+        Instant timestamp = Instant.now();
         DeviceActionRequest request = DeviceActionRequest.newBuilder()
                 .setHubId(hubId)
                 .setScenarioName(name)
                 .setAction(actionProto.build())
                 .setTimestamp(
                         Timestamp.newBuilder()
-                                .setSeconds(time.getEpochSecond())
-                                .setNanos(time.getNano())
+                                .setSeconds(timestamp.getEpochSecond())
+                                .setNanos(timestamp.getNano())
                                 .build()
                 )
                 .build();

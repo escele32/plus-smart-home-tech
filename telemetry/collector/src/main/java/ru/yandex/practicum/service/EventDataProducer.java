@@ -26,13 +26,13 @@ public class EventDataProducer {
     private SensorEventProto createTemperatureSensorEvent(TemperatureSensor sensor) {
         int temperatureCelsius = getRandomSensorValue(sensor.getTemperatureC());
         int temperatureFahrenheit = (int) (temperatureCelsius * 1.8 + 32);
-        Instant ts = Instant.now();
+        Instant timestamp = Instant.now();
 
         return SensorEventProto.newBuilder()
                 .setId(sensor.getId())
                 .setTimestamp(Timestamp.newBuilder()
-                        .setSeconds(ts.getEpochSecond())
-                        .setNanos(ts.getNano())
+                        .setSeconds(timestamp.getEpochSecond())
+                        .setNanos(timestamp.getNano())
                 ).setTemperatureSensor(
                         TemperatureSensorProto.newBuilder()
                                 .setTemperatureC(temperatureCelsius)

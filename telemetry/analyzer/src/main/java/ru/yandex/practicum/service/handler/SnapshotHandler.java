@@ -25,7 +25,7 @@ public class SnapshotHandler {
     HubRouterEventDataService hubRouterService;
     ValueExtractor valueExtractor;
 
-    private boolean accordance(ConditionOperation operation, int actualValue, Integer conditionValue) {
+    private boolean isAccordance(ConditionOperation operation, int actualValue, Integer conditionValue) {
         if (conditionValue == null) {
             return false;
         }
@@ -54,7 +54,7 @@ public class SnapshotHandler {
             }
             SpecificRecordBase data = (SpecificRecordBase) state.getData();
             Integer actualValue = valueExtractor.extractValue(condition.getType(), data);
-            if (actualValue == null || !accordance(condition.getOperation(), actualValue, condition.getValue())) {
+            if (actualValue == null || !isAccordance(condition.getOperation(), actualValue, condition.getValue())) {
                 return false;
             }
         }
