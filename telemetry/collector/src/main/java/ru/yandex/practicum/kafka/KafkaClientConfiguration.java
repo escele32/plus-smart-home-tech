@@ -19,13 +19,13 @@ public class KafkaClientConfiguration {
         return new KafkaClient() {
             private Producer<String, SpecificRecordBase> producer;
 
-
-
             private void initProducer() {
                 Properties config = new Properties();
                 config.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-                config.setProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
-                config.setProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "ru.yandex.practicum.kafka.GeneralAvroSerializer");
+                config.setProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
+                        "org.apache.kafka.common.serialization.StringSerializer");
+                config.setProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
+                        "ru.yandex.practicum.kafka.GeneralAvroSerializer");
                 producer = new KafkaProducer<>(config);
             }
 
