@@ -65,10 +65,10 @@ public class ProductServiceImpl implements ProductService {
     public ProductDto update(Long productId, UpdateProductRequest request) {
         log.debug("Обновление данных продукта с id {}", productId);
         Product product = validateProduct(productId);
-        if (!request.name().isBlank()) {
+        if (request.name() != null) {
             product.setName(request.name());
         }
-        if (!request.description().isEmpty()) {
+        if (request.description() != null) {
             product.setDescription(request.description());
         }
         if (request.price() != null) {
