@@ -31,7 +31,6 @@ public class ProductController {
     }
 
     @PatchMapping(ApiPath.ID)
-    @ResponseStatus(HttpStatus.OK)
     public ProductDto updateProduct(
             @PathVariable("id") Long productId,
             @Valid @RequestBody UpdateProductRequest request
@@ -41,28 +40,24 @@ public class ProductController {
     }
 
     @GetMapping
-    @ResponseStatus(HttpStatus.OK)
     public List<ProductDto> findAll() {
         log.info("Запрос на получение списка продуктов");
         return service.getAll();
     }
 
     @GetMapping(ApiPath.ID)
-    @ResponseStatus(HttpStatus.OK)
     public ProductDto findByProductId(@PathVariable("id") Long productId) {
         log.info("Запрос на получение продукта по id{}", productId);
         return service.getById(productId);
     }
 
     @GetMapping(ApiPath.CATEGORY + ApiPath.CATEGORY_ID)
-    @ResponseStatus(HttpStatus.OK)
     public List<ProductDto> findProductsByCategoryId(@PathVariable Long categoryId) {
         log.info("Запрос на получение списка продуктов по категории с id {}", categoryId);
         return service.getProductsCategoryId(categoryId);
     }
 
     @GetMapping(ApiPath.SEARCH)
-    @ResponseStatus(HttpStatus.OK)
     public List<ProductDto> findProductsSearch(@RequestParam String query) {
         log.info("Запрос на получение списка продуктов по запросу {}", query);
         return service.getSearch(query);

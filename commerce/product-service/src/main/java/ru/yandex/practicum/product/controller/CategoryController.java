@@ -31,14 +31,12 @@ public class CategoryController {
     }
 
     @GetMapping(ApiPath.ID)
-    @ResponseStatus(HttpStatus.OK)
     public CategoryDto findCategoryById(@PathVariable("id") Long categoryId) {
         log.info("Запрос на получение категории по id {}", categoryId);
         return service.getById(categoryId);
     }
 
     @GetMapping
-    @ResponseStatus(HttpStatus.OK)
     public List<CategoryDto> findAll() {
         log.info("Запрос на получение списка категорий");
         return service.getAll();

@@ -32,28 +32,24 @@ public class InventoryController {
     }
 
     @PutMapping
-    @ResponseStatus(HttpStatus.OK)
     public InventoryDto updateInventory(@Valid @RequestBody UpdateInventoryRequest request) {
         log.info("Запрос на обновление скаладской записи {}", request);
         return service.update(request);
     }
 
     @GetMapping
-    @ResponseStatus(HttpStatus.OK)
     public List<InventoryDto> findAll() {
         log.info("Запрос на получение списка складских записей");
         return service.getAll();
     }
 
     @GetMapping(ApiPath.PRODUCT_ID)
-    @ResponseStatus(HttpStatus.OK)
     public Integer findProductBalances(@PathVariable Long productId) {
         log.info("Запрос на получение остатков по товару с id {}", productId);
         return service.getProductBalances(productId);
     }
 
-    @GetMapping(ApiPath.RESERVE)
-    @ResponseStatus(HttpStatus.OK)
+    @PostMapping(ApiPath.RESERVE)
     public ReserveResponse findReserveProduct(@Valid @RequestBody ReserveRequest request) {
         log.info("Запрос на резервирование товара с id {}", request.productId());
         return service.reserveProduct(request);

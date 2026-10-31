@@ -30,21 +30,18 @@ public class OrderController {
     }
 
     @GetMapping(ApiPath.ID)
-    @ResponseStatus(HttpStatus.OK)
     public OrderDto findById(@PathVariable("id") Long orderId) {
         log.info("Запрос на получение заказа по id {}", orderId);
         return service.getById(orderId);
     }
 
     @GetMapping
-    @ResponseStatus(HttpStatus.OK)
     public List<OrderDto> findAll() {
         log.info("Запрос на получение списка заказов");
         return service.getAll();
     }
 
     @GetMapping(ApiPath.BY_EMAIL)
-    @ResponseStatus(HttpStatus.OK)
     public List<OrderDto> findOrdersByEmail(@RequestParam String email) {
         log.info("Запрос на получение списка заказов по email {}", email);
         return service.getOrdersByEmail(email);
