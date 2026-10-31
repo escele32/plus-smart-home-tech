@@ -46,17 +46,15 @@ public class OrderServiceImpl implements OrderService {
         BigDecimal totalPrice = request.items().stream()
                 .map(this::calculateItemTotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        order.setItems(request.items().stream()
+        request.items().stream()
                 .map(item -> OrderItem.builder()
                         .productId(item.productId())
                         .productName(item.productName())
                         .quantity(item.quantity())
                         .price(item.price())
-                        .order(order)
                         .build()
                 )
-                .toList()
-        );
+                .forEach(order::addItem);
         order.setTotalPrice(totalPrice);
         log.info("Заказ создан {}", order);
         return OrderMapper.toDto(repository.save(order));

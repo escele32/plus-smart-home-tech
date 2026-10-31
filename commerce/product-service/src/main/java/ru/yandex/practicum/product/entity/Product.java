@@ -1,7 +1,6 @@
 package ru.yandex.practicum.product.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 

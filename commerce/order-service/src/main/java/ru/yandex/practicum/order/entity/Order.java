@@ -43,4 +43,9 @@ public class Order {
     @OneToMany(fetch = FetchType.EAGER)
     @Builder.Default
     List<OrderItem> items = new ArrayList<>();
+
+    public void addItem(OrderItem item) {
+        items.add(item);
+        item.setOrder(this);
+    }
 }

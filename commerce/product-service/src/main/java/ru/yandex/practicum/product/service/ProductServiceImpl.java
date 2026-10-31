@@ -52,7 +52,7 @@ public class ProductServiceImpl implements ProductService {
                 .name(request.name())
                 .description(request.description())
                 .price(request.price())
-                .category(category)
+                .category(category == null ? null : categoryRepository.findById(category.getId()).get())
                 .imageUrl(request.imageUrl())
                 .build()
         );

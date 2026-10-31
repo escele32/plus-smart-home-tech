@@ -1,3 +1,6 @@
+server:
+  port: 0
+
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5433/order_db
@@ -10,6 +13,3 @@ spring:
   sql:
     init:
       mode: never
-
-server:
-  port: 0

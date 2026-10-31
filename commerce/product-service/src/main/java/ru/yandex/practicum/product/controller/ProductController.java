@@ -47,7 +47,7 @@ public class ProductController {
 
     @GetMapping(ApiPath.ID)
     public ProductDto findByProductId(@PathVariable("id") Long productId) {
-        log.info("Запрос на получение продукта по id{}", productId);
+        log.info("Запрос на получение продукта по id {}", productId);
         return service.getById(productId);
     }
 

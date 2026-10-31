@@ -40,7 +40,7 @@ public class InventoryServiceImpl implements InventoryService {
         log.debug("Добавление складской записи товара с id {}", request);
         Inventory inventory = repository.save(Inventory.builder()
                 .productId(request.productId())
-                .quantity(0)
+                .quantity(request.quantity())
                 .reservedQuantity(0)
                 .build()
         );
@@ -53,9 +53,6 @@ public class InventoryServiceImpl implements InventoryService {
     public InventoryDto update(UpdateInventoryRequest request) {
         log.debug("Обновление складской записи продукта с id {}", request.productId());
         Inventory inventory = validateInventory(request.productId());
-        if (request.productId() != null) {
-            inventory.setProductId(request.productId());
-        }
         if (request.quantity() != null) {
             inventory.setQuantity(request.quantity());
         }
@@ -71,7 +68,6 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
-    @Transactional
     public InventoryDto getByProductId(Long productId) {
         log.debug("Получение остатков по товару с id {}", productId);
         Inventory inventory = validateInventory(productId);
