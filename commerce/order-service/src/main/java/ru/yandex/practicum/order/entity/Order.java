@@ -26,7 +26,6 @@ public class Order {
     String customerName;
 
     @Column(name = "customer_email", nullable = false)
-    @Email
     String customerEmail;
 
     @Column(name = "status", nullable = false)

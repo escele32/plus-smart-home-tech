@@ -89,7 +89,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public List<ProductDto> getAll() {
-        List<Product> products = productRepository.findAll();
+        List<Product> products = productRepository.findByActiveTrue().stream().toList();
         log.info("Получение списка продуктов");
         return products.stream().map(ProductMapper::toDto).toList();
     }
@@ -104,7 +104,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public List<ProductDto> getProductsCategoryId(Long categoryId) {
         Category category = validateCategory(categoryId);
-        List<Product> products = productRepository.findByCategoryId(category.getId()).stream().toList();
+        List<Product> products = productRepository.findByCategoryIdAndActiveTrue(category.getId()).stream().toList();
         log.info("Получение списка продуктов по категории с id {}", category.getId());
         return products.stream().map(ProductMapper::toDto).toList();
     }
@@ -117,7 +117,8 @@ public class ProductServiceImpl implements ProductService {
             log.info("По данному запросу {} список продуктов пуст", searchQuery);
             return Collections.emptyList();
         }
-        List<Product> products = productRepository.findByNameContainingIgnoreCase(searchQuery).stream().toList();
+        List<Product> products = productRepository.findByNameContainingIgnoreCaseAndActiveTrue(searchQuery)
+                .stream().toList();
         log.info("По данному запросу {} получен список продуктов", searchQuery);
         return products.stream().map(ProductMapper::toDto).toList();
     }

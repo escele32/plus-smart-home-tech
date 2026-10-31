@@ -19,10 +19,10 @@ public class Inventory {
     @Column(name = "product_id", unique = true)
     Long productId;
 
-    @Column(name = "quantity")
+    @Column(name = "quantity", nullable = false)
     Integer quantity;
 
-    @Column(name = "reservedQuantity")
+    @Column(name = "reservedQuantity", nullable = false)
     Integer reservedQuantity;
 
     @Version

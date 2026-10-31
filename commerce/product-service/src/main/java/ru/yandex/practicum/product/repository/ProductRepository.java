@@ -7,7 +7,9 @@ import java.util.Collection;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
-    Collection<Product> findByCategoryId(Long categoryId);
+    Collection<Product> findByActiveTrue();
 
-    Collection<Product> findByNameContainingIgnoreCase(String query);
+    Collection<Product> findByCategoryIdAndActiveTrue(Long categoryId);
+
+    Collection<Product> findByNameContainingIgnoreCaseAndActiveTrue(String query);
 }

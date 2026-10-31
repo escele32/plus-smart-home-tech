@@ -40,7 +40,7 @@ public class InventoryServiceImpl implements InventoryService {
         log.debug("Добавление складской записи товара с id {}", request);
         Inventory inventory = repository.save(Inventory.builder()
                 .productId(request.productId())
-                .quantity(request.quantity())
+                .quantity(0)
                 .reservedQuantity(0)
                 .build()
         );
@@ -72,12 +72,11 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     @Transactional
-    public Integer getProductBalances(Long productId) {
+    public InventoryDto getByProductId(Long productId) {
         log.debug("Получение остатков по товару с id {}", productId);
         Inventory inventory = validateInventory(productId);
-        InventoryDto dto = InventoryMapper.toDto(inventory);
         log.info("Получены остатки по товару с id {}", productId);
-        return dto.availableQuantity();
+        return InventoryMapper.toDto(inventory);
     }
 
     @Override

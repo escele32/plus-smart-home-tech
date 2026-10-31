@@ -44,9 +44,9 @@ public class InventoryController {
     }
 
     @GetMapping(ApiPath.PRODUCT_ID)
-    public Integer findProductBalances(@PathVariable Long productId) {
+    public InventoryDto findByProductId(@PathVariable Long productId) {
         log.info("Запрос на получение остатков по товару с id {}", productId);
-        return service.getProductBalances(productId);
+        return service.getByProductId(productId);
     }
 
     @PostMapping(ApiPath.RESERVE)

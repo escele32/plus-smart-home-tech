@@ -19,12 +19,10 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
 
-    @Column(name = "name", nullable = false)
-    @Size(max = 255)
+    @Column(name = "name", nullable = false, length = 255)
     String name;
 
-    @Column(name = "description", nullable = false)
-    @Size(max = 2000)
+    @Column(name = "description", length = 2000)
     String description;
 
     @Column(name = "price", nullable = false, precision = 10, scale = 2)
@@ -37,6 +35,6 @@ public class Product {
     @Column(name = "image_url")
     String imageUrl;
 
-    @Column(name = "active")
+    @Column(name = "active", nullable = false)
     Boolean active;
 }

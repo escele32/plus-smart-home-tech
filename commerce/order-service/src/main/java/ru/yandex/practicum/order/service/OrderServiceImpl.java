@@ -80,7 +80,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public List<OrderDto> getOrdersByEmail(String email) {
-        List<Order> orders = repository.findByCustomerEmail(email);
+        List<Order> orders = repository.findByCustomerEmail(email).stream().toList();
         log.info("Получение списка заказов по email {}", email);
         return orders.stream().map(OrderMapper::toDto).toList();
     }

@@ -15,7 +15,7 @@ public interface InventoryService {
 
     List<InventoryDto> getAll();
 
-    Integer getProductBalances(Long productId);
+    InventoryDto getByProductId(Long productId);
 
     ReserveResponse reserveProduct(ReserveRequest request);
 }
