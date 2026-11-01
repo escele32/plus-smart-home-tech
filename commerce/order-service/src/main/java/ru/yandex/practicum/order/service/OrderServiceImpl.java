@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.order.dto.CreateOrderRequest;
 import ru.yandex.practicum.order.dto.OrderDto;
-import ru.yandex.practicum.order.dto.OrderItemRequest;
 import ru.yandex.practicum.order.entity.Order;
 import ru.yandex.practicum.order.entity.OrderItem;
 import ru.yandex.practicum.order.exception.NotFoundException;
@@ -29,10 +28,6 @@ public class OrderServiceImpl implements OrderService {
     OrderRepository repository;
     static String STATUS = "CREATED";
 
-    private BigDecimal calculateItemTotal(OrderItemRequest item) {
-        return item.price().multiply(BigDecimal.valueOf(item.quantity()));
-    }
-
     @Override
     @Transactional
     public OrderDto create(CreateOrderRequest request) {
@@ -44,17 +39,18 @@ public class OrderServiceImpl implements OrderService {
                 .createdAt(LocalDateTime.now())
                 .build();
         BigDecimal totalPrice = request.items().stream()
-                .map(this::calculateItemTotal)
+                .map(item -> item.price().multiply(BigDecimal.valueOf(item.quantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        request.items().stream()
-                .map(item -> OrderItem.builder()
-                        .productId(item.productId())
-                        .productName(item.productName())
-                        .quantity(item.quantity())
-                        .price(item.price())
-                        .build()
-                )
-                .forEach(order::addItem);
+        request.items().forEach(itemRequest -> {
+                        OrderItem item = OrderItem.builder()
+                                .order(order)
+                                .productId(itemRequest.productId())
+                                .productName(itemRequest.productName())
+                                .quantity(itemRequest.quantity())
+                                .price(itemRequest.price())
+                                .build();
+                        order.getItems().add(item);
+        });
         order.setTotalPrice(totalPrice);
         log.info("Заказ создан {}", order);
         return OrderMapper.toDto(repository.save(order));

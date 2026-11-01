@@ -47,12 +47,11 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public ProductDto create(CreateProductRequest request) {
         log.debug("Добавление продукта {}", request);
-        Category category = validateCategory(request.categoryId());
         Product product = productRepository.save(Product.builder()
                 .name(request.name())
                 .description(request.description())
                 .price(request.price())
-                .category(category == null ? null : categoryRepository.findById(category.getId()).get())
+                .category(validateCategory(request.categoryId()) != null ? validateCategory(request.categoryId()) : null)
                 .imageUrl(request.imageUrl())
                 .build()
         );
@@ -77,7 +76,7 @@ public class ProductServiceImpl implements ProductService {
         if (request.categoryId() != null) {
             product.setCategory(validateCategory(request.categoryId()));
         }
-        if (!request.imageUrl().isEmpty()) {
+        if (request.imageUrl() != null) {
             product.setImageUrl(request.imageUrl());
         }
         if (request.active() != null) {

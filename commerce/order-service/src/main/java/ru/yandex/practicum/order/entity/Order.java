@@ -1,7 +1,6 @@
 package ru.yandex.practicum.order.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -43,9 +42,4 @@ public class Order {
     @OneToMany(fetch = FetchType.EAGER)
     @Builder.Default
     List<OrderItem> items = new ArrayList<>();
-
-    public void addItem(OrderItem item) {
-        items.add(item);
-        item.setOrder(this);
-    }
 }
