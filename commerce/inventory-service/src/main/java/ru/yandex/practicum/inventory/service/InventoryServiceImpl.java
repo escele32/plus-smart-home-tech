@@ -88,7 +88,7 @@ public class InventoryServiceImpl implements InventoryService {
                     request.productId(), inventory.getAvailableQuantity(), request.quantity()));
         }
         inventory.setReservedQuantity(inventory.getReservedQuantity() + request.quantity());
-        InventoryDto dto = InventoryMapper.toDto(inventory);
+        InventoryDto dto = InventoryMapper.toDto(repository.save(inventory));
         log.info("Товар с id {} успешно зарезервирован", dto.productId());
         return new ReserveResponse(true, dto.availableQuantity(), "Товар успешно зарезервирован");
     }

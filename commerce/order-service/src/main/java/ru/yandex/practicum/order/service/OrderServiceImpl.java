@@ -32,15 +32,16 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     public OrderDto create(CreateOrderRequest request) {
         log.debug("Добавление заказа {}", request);
+        BigDecimal totalPrice = request.items().stream()
+                .map(item -> item.price().multiply(BigDecimal.valueOf(item.quantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
         Order order = Order.builder()
                 .customerName(request.customerName())
                 .customerEmail(request.customerEmail())
                 .status(STATUS)
+                .totalPrice(totalPrice)
                 .createdAt(LocalDateTime.now())
                 .build();
-        BigDecimal totalPrice = request.items().stream()
-                .map(item -> item.price().multiply(BigDecimal.valueOf(item.quantity())))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
         request.items().forEach(itemRequest -> {
                         OrderItem item = OrderItem.builder()
                                 .order(order)
@@ -51,7 +52,6 @@ public class OrderServiceImpl implements OrderService {
                                 .build();
                         order.getItems().add(item);
         });
-        order.setTotalPrice(totalPrice);
         log.info("Заказ создан {}", order);
         return OrderMapper.toDto(repository.save(order));
     }

@@ -47,12 +47,17 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public ProductDto create(CreateProductRequest request) {
         log.debug("Добавление продукта {}", request);
+        Category category = null;
+        if (request.categoryId() != null) {
+            category = validateCategory(request.categoryId());
+        }
         Product product = productRepository.save(Product.builder()
                 .name(request.name())
                 .description(request.description())
                 .price(request.price())
-                .category(validateCategory(request.categoryId()) != null ? validateCategory(request.categoryId()) : null)
+                .category(category)
                 .imageUrl(request.imageUrl())
+                .active(true)
                 .build()
         );
         log.info("Создан продукт с id {}", product.getId());
