@@ -38,13 +38,16 @@ public class InventoryServiceImpl implements InventoryService {
     @Transactional
     public InventoryDto create(UpdateInventoryRequest request) {
         log.debug("Добавление складской записи товара с id {}", request);
-        Inventory inventory = repository.findByProductId(request.productId())
-                .orElseGet(() -> Inventory.builder()
+        if (repository.findByProductId(request.productId()).isPresent()) {
+            log.warn("Для продукта с id {} складская запись уже существует", request.productId());
+            throw new IllegalArgumentException(format("Для продукта с id %d складская запись уже существует",
+                    request.productId()));
+        }
+        Inventory inventory = Inventory.builder()
                     .productId(request.productId())
                     .quantity(request.quantity())
                     .reservedQuantity(0)
-                    .build()
-        );
+                    .build();
         log.info("Создана складская запись с id {}", inventory.getId());
         return InventoryMapper.toDto(repository.save(inventory));
     }

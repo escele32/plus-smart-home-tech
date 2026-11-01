@@ -39,7 +39,7 @@ public class Order {
     @Column(name = "created_at", nullable = false)
     LocalDateTime createdAt;
 
-    @OneToMany(fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @Builder.Default
     List<OrderItem> items = new ArrayList<>();
 }
