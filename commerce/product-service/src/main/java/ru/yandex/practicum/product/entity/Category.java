@@ -6,7 +6,7 @@ import lombok.experimental.FieldDefaults;
 
 @Entity
 @Table(name = "categories")
-@Data
+@Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
