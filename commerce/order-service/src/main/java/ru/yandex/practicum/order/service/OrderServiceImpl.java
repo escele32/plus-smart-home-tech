@@ -25,8 +25,8 @@ import static java.lang.String.format;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class OrderServiceImpl implements OrderService {
+    static String CONFIRMED = "CONFIRMED";
     OrderRepository repository;
-    static String STATUS = "CREATED";
 
     @Override
     @Transactional
@@ -38,19 +38,19 @@ public class OrderServiceImpl implements OrderService {
         Order order = Order.builder()
                 .customerName(request.customerName())
                 .customerEmail(request.customerEmail())
-                .status(STATUS)
+                .status(CONFIRMED)
                 .totalPrice(totalPrice)
                 .createdAt(LocalDateTime.now())
                 .build();
         request.items().forEach(itemRequest -> {
-                        OrderItem item = OrderItem.builder()
-                                .order(order)
-                                .productId(itemRequest.productId())
-                                .productName(itemRequest.productName())
-                                .quantity(itemRequest.quantity())
-                                .price(itemRequest.price())
-                                .build();
-                        order.getItems().add(item);
+            OrderItem item = OrderItem.builder()
+                    .order(order)
+                    .productId(itemRequest.productId())
+                    .productName(itemRequest.productName())
+                    .quantity(itemRequest.quantity())
+                    .price(itemRequest.price())
+                    .build();
+            order.getItems().add(item);
         });
         log.info("Заказ создан {}", order);
         return OrderMapper.toDto(repository.save(order));

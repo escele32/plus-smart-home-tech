@@ -13,3 +13,20 @@ spring:
   sql:
     init:
       mode: never
+  cloud:
+    open-feign:
+      client:
+        config:
+          inventory-service: # название сервиса в @FeignClient
+            connectTimeout: 1000
+            readTimeout: 2000
+            loggerLevel: basic
+          product-service:
+            connectTimeout: 1000
+            readTimeout: 2000
+            loggerLevel: basic
+
+logging:
+  level:
+    ru.yandex.practicum.order.feign.InventoryClient: DEBUG
+    ru.yandex.practicum.order.feign.ProductClient: DEBUG
