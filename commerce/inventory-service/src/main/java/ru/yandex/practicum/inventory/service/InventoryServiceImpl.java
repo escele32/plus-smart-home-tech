@@ -95,4 +95,21 @@ public class InventoryServiceImpl implements InventoryService {
         log.info("Товар с id {} успешно зарезервирован", dto.productId());
         return new ReserveResponse(true, dto.availableQuantity(), "Товар успешно зарезервирован");
     }
+
+    @Override
+    @Transactional
+    public ReserveResponse releaseProduct(ReserveRequest request) {
+        log.debug("Возвращение товара с id {}", request.productId());
+        Inventory inventory = validateInventory(request.productId());
+        if (inventory.getReservedQuantity() < request.quantity()) {
+            log.warn("Нельзя отменить резервирование товара с id {}: зарезервировано {}, к отмене {}",
+                    inventory.getProductId(), inventory.getReservedQuantity(), request.quantity());
+            throw new IllegalArgumentException(format("Нельзя отменить резервирование товара с id %d: зарезервировано %d, к отмене %d",
+                    inventory.getProductId(), inventory.getReservedQuantity(), request.quantity()));
+        }
+        inventory.setReservedQuantity(inventory.getReservedQuantity() - request.quantity());
+        InventoryDto dto = InventoryMapper.toDto(repository.save(inventory));
+        log.info("Отмена резервирования товара с id {}", dto.productId());
+        return new ReserveResponse(true, dto.availableQuantity(), "Отмена резервирования, - успешна");
+    }
 }

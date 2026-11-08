@@ -54,4 +54,10 @@ public class InventoryController {
         log.info("Запрос на резервирование товара с id {}", request.productId());
         return service.reserveProduct(request);
     }
+
+    @PostMapping(ApiPath.RELEASE)
+    public ReserveResponse findReleaseProduct(@Valid @RequestBody ReserveRequest request) {
+        log.info("Запрос на возврат товара с id {}", request.productId());
+        return service.releaseProduct(request);
+    }
 }

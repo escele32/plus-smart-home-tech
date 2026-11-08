@@ -18,16 +18,16 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ErrorResponse handleNotFound(NotFoundException e) {
-        log.warn("Ресурс не найден: {}", e.getMessage());
-        return new ErrorResponse(HttpStatus.NOT_FOUND.value(), e.getMessage());
+    public ErrorResponse handleNotFound(NotFoundException exception) {
+        log.warn("Ресурс не найден: {}", exception.getMessage());
+        return new ErrorResponse(HttpStatus.NOT_FOUND.value(), exception.getMessage());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleValidation(MethodArgumentNotValidException e) {
+    public ErrorResponse handleValidation(MethodArgumentNotValidException exception) {
         Map<String, String> errors = new HashMap<>();
-        e.getBindingResult().getFieldErrors()
+        exception.getBindingResult().getFieldErrors()
                 .forEach(error -> errors.put(error.getField(), error.getDefaultMessage()));
         log.warn("Ошибка валидации: {}", errors);
         return new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Ошибка валидации", errors);
@@ -35,8 +35,15 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ErrorResponse handleGeneral(Exception e) {
-        log.error("Внутренняя ошибка сервера", e);
+    public ErrorResponse handleGeneral(Exception exception) {
+        log.error("Внутренняя ошибка сервера", exception);
         return new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Внутренняя ошибка сервера");
+    }
+
+    @ExceptionHandler(OrderProcessingException.class)
+    @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+    public ErrorResponse handleOrderProcessing(OrderProcessingException exception) {
+        log.warn("Ошибка обработки заказа: {}", exception.getMessage());
+        return new ErrorResponse(HttpStatus.UNPROCESSABLE_ENTITY.value(), exception.getMessage());
     }
 }
