@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.lang.String.format;
 
@@ -85,26 +86,23 @@ public class OrderOrchestrationService {
             case ServiceCallResult.Failure<ProductDto> failure -> throw new OrderProcessingException(failure.message());
             case ServiceCallResult.Degraded<ProductDto> degraded ->
                     throw new ProductServiceUnavailableException(degraded.reason());
-            default -> throw new OrderProcessingException("Неизвестный результат проверки товара");
         };
     }
 
-    private void reserve(InventoryRequest request, List<InventoryRequest> reserved) {
+    private boolean reserve(InventoryRequest request, List<InventoryRequest> reserved) {
         ServiceCallResult<InventoryResponse> result = getReserve(request);
-        switch (result) {
+        return switch (result) {
             case ServiceCallResult.Success<InventoryResponse> success -> {
-                // Добавляем только после подтверждённого резервирования.
                 reserved.add(request);
-                return;
+                yield true;
             }
             case ServiceCallResult.Failure<InventoryResponse> failure ->
                     throw new OrderProcessingException(failure.message());
-            case ServiceCallResult.Degraded<InventoryResponse> degraded ->
-                    throw new InventoryServiceUnavailableException(degraded.reason());
-            default -> {
+            case ServiceCallResult.Degraded<InventoryResponse> degraded -> {
+                log.warn("Склад временно недоступен: {}", degraded.reason());
+                yield false;
             }
-        }
-        throw new OrderProcessingException("Неизвестный результат резервирования товара");
+        };
     }
 
     private void getRelease(List<InventoryRequest> requestReserve) {
@@ -112,13 +110,8 @@ public class OrderOrchestrationService {
             InventoryRequest request = requestReserve.get(i);
             try {
                 inventoryClient.releaseStock(request);
-            } catch (FeignException exception) {
-                if (exception.status() >= 400 && exception.status() < 500) {
+            } catch (RuntimeException exception) {
                     log.warn("Не удалось отменить резерв {} товара с id {}", request.quantity(), request.productId());
-                    throw exception;
-                }
-                throw new OrderProcessingException(format("Не удалось отменить резерв %d товара с id %d",
-                        request.quantity(), request.productId()));
             }
         }
     }
@@ -138,11 +131,13 @@ public class OrderOrchestrationService {
         Map<Long, Integer> quantityMap = getAggregate(request.items());
         Map<Long, ProductDto> productMap = new LinkedHashMap<>();
         List<InventoryRequest> reserveList = new ArrayList<>();
+        AtomicBoolean isFullyReserved = new AtomicBoolean(true);
         try {
             quantityMap.keySet().forEach(productId -> productMap.put(productId, requireProduct(productId)));
-            quantityMap.forEach((key, value) -> {
-                InventoryRequest inventoryRequest = new InventoryRequest(key, value);
-                reserve(inventoryRequest, reserveList);
+            quantityMap.forEach((productId, quantity) -> {
+                if (!reserve(new InventoryRequest(productId, quantity), reserveList)) {
+                    isFullyReserved.set(false);
+                }
             });
             List<OrderItemRequest> itemsSnapshotList = request.items()
                     .stream()
@@ -154,7 +149,11 @@ public class OrderOrchestrationService {
                     request.customerEmail(),
                     itemsSnapshotList
             );
-            return service.create(orderRequest);
+            return service.create(orderRequest, isFullyReserved.get());
+        } catch (OrderProcessingException exception) {
+            log.warn("Не удалось завершить создание заказа, отменяем резервы: {}", exception.getMessage());
+            getRelease(reserveList);
+            throw exception;
         } catch (RuntimeException exception) {
             log.warn("Не удалось завершить создание заказа, отмена резервирования");
             getRelease(reserveList);

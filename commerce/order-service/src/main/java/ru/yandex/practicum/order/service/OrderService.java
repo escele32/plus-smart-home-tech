@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface OrderService {
 
-    OrderDto create(CreateOrderRequest request);
+    OrderDto create(CreateOrderRequest request, boolean isFullyReserved);
 
     OrderDto getById(Long orderId);
 
