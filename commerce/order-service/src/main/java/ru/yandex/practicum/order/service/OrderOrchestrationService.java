@@ -66,6 +66,12 @@ public class OrderOrchestrationService {
             log.warn("Склад временно недоступен");
             return new ServiceCallResult.Degraded<>("Склад временно недоступен");
         } catch (FeignException exception) {
+            if (exception.status() >= 400 && exception.status() < 500) {
+                log.warn("Склад отклонил резерв товара с id {}", request.productId());
+                return new ServiceCallResult.Failure<>(
+                        format("Склад отклонил резерв товара с id %d", request.productId())
+                );
+            }
             log.warn("Товар с id {} не удалось зарезервировать", request.productId());
             return new ServiceCallResult.Degraded<>(format("Товар с id %d не удалось зарезервировать",
                     request.productId()));
@@ -107,7 +113,10 @@ public class OrderOrchestrationService {
             try {
                 inventoryClient.releaseStock(request);
             } catch (FeignException exception) {
-                log.warn("Не удалось отменить резерв {} товара с id {}", request.quantity(), request.productId());
+                if (exception.status() >= 400 && exception.status() < 500) {
+                    log.warn("Не удалось отменить резерв {} товара с id {}", request.quantity(), request.productId());
+                    throw exception;
+                }
                 throw new OrderProcessingException(format("Не удалось отменить резерв %d товара с id %d",
                         request.quantity(), request.productId()));
             }
@@ -148,11 +157,6 @@ public class OrderOrchestrationService {
             return service.create(orderRequest);
         } catch (RuntimeException exception) {
             log.warn("Не удалось завершить создание заказа, отмена резервирования");
-            if (exception instanceof OrderProcessingException
-                    || exception instanceof ProductServiceUnavailableException
-                    || exception instanceof InventoryServiceUnavailableException) {
-                throw exception;
-            }
             getRelease(reserveList);
             throw new OrderProcessingException("Не удалось завершить создание заказа, попробуйте зарезервировать позже");
         }
