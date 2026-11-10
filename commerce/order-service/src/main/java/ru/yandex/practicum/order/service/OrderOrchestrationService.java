@@ -114,10 +114,6 @@ public class OrderOrchestrationService {
         }
     }
 
-    private boolean isLegacySnapshot(OrderItemRequest itemDto) {
-        return itemDto.productName() != null && itemDto.price() != null;
-    }
-
     private OrderItemRequest getSnapshot(OrderItemRequest itemDto, ProductDto productDto) {
         return new OrderItemRequest(itemDto.productId(), productDto.name(), itemDto.quantity(), productDto.price());
     }
@@ -130,14 +126,11 @@ public class OrderOrchestrationService {
     }
 
     public OrderDto createOrder(CreateOrderRequest request) {
-        if (request.items().stream().anyMatch(this::isLegacySnapshot)) {
-            return service.create(request);
-        }
         Map<Long, Integer> quantityMap = getAggregate(request.items());
         Map<Long, ProductDto> productMap = new LinkedHashMap<>();
-        quantityMap.keySet().forEach(productId -> productMap.put(productId, requireProduct(productId)));
         List<InventoryRequest> reserveList = new ArrayList<>();
         try {
+            quantityMap.keySet().forEach(productId -> productMap.put(productId, requireProduct(productId)));
             quantityMap.forEach((key, value) -> {
                 InventoryRequest inventoryRequest = new InventoryRequest(key, value);
                 reserve(inventoryRequest, reserveList);

@@ -25,7 +25,7 @@ import static java.lang.String.format;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class OrderServiceImpl implements OrderService {
-    static String PENDING_CONFIRMATION = "PENDING_CONFIRMATION";
+    static String CONFIRMED = "CONFIRMED";
     OrderRepository repository;
 
     @Override
@@ -38,7 +38,7 @@ public class OrderServiceImpl implements OrderService {
         Order order = Order.builder()
                 .customerName(request.customerName())
                 .customerEmail(request.customerEmail())
-                .status(PENDING_CONFIRMATION)
+                .status(CONFIRMED)
                 .statusDetails("Заказ требует проверки!")
                 .totalPrice(totalPrice)
                 .createdAt(LocalDateTime.now())
@@ -47,7 +47,7 @@ public class OrderServiceImpl implements OrderService {
             OrderItem item = OrderItem.builder()
                     .order(order)
                     .productId(itemRequest.productId())
-                    .productName(format("Товар %s ожидает проверки", itemRequest.productName()))
+                    .productName(itemRequest.productName())
                     .quantity(itemRequest.quantity())
                     .price(itemRequest.price())
                     .build();
