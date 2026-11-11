@@ -46,10 +46,12 @@ public class OrderOrchestrationService {
             return new ServiceCallResult.Failure<>(format("Товар с id %d не найден", productId));
         } catch (ProductServiceUnavailableException exception) {
             log.warn("Каталог недоступен: {}", exception.getMessage());
-            return new ServiceCallResult.Degraded<>("Каталог недоступен");
-        } catch (FeignException exception) {
-            log.warn("Не удалось получить данные товара c id {}", productId);
+            return new ServiceCallResult.Degraded<>(format("Каталог недоступен, товар с id %d будет проверен позже",
+                    productId));
+        } catch (RuntimeException exception) {
+            log.warn("Не удалось получить данные товара c id {}: {}", productId, exception.getMessage());
             return new ServiceCallResult.Degraded<>(format("Не удалось получить данные товара c id %d", productId));
+
         }
     }
 
