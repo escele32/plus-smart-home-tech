@@ -16,10 +16,7 @@ import ru.yandex.practicum.order.exception.ProductServiceUnavailableException;
 import ru.yandex.practicum.order.feign.*;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.lang.String.format;
@@ -38,7 +35,7 @@ public class OrderOrchestrationService {
             ProductDto dto = productClient.getProductById(productId);
             if (!Boolean.TRUE.equals(dto.active())) {
                 log.warn("Товар с id {} снят с продажи", productId);
-                return new  ServiceCallResult.Failure<>(format("Товар с id %d снят с продажи", productId));
+                return new ServiceCallResult.Failure<>(format("Товар с id %d снят с продажи", productId));
             }
             return new ServiceCallResult.Success<>(dto);
         } catch (FeignException.NotFound exception) {
@@ -111,9 +108,11 @@ public class OrderOrchestrationService {
 
     private OrderItemRequest getSnapshot(OrderItemRequest itemDto, ProductDto productDto) {
         if (productDto == null) {
-            // каталог деградировал: сохраняем как есть, цена 0, данные доуточним при подтверждении
-            return new OrderItemRequest(itemDto.productId(), itemDto.productName(), itemDto.quantity(),
-                    itemDto.price() != null ? itemDto.price() : BigDecimal.ZERO);
+            // каталог деградировал: данные недоверенные — цену в итог не включаем, уточним при подтверждении
+            String name = itemDto.productName() != null
+                    ? itemDto.productName()
+                    : format("Товар c id %d (ожидает проверки)", itemDto.productId());
+            return new OrderItemRequest(itemDto.productId(), name, itemDto.quantity(), BigDecimal.ZERO);
         }
         return new OrderItemRequest(itemDto.productId(), productDto.name(), itemDto.quantity(), productDto.price());
     }
@@ -129,6 +128,7 @@ public class OrderOrchestrationService {
         Map<Long, Integer> quantityMap = getAggregate(request.items());
         Map<Long, ProductDto> productMap = new LinkedHashMap<>();
         List<InventoryRequest> reserveList = new ArrayList<>();
+        Set<Long> degradedProductIds = new LinkedHashSet<>();
         AtomicBoolean isFullyReserved = new AtomicBoolean(true);
         try {
             quantityMap.forEach((productId, quantity) -> {
@@ -139,9 +139,9 @@ public class OrderOrchestrationService {
                     case ServiceCallResult.Failure<ProductDto> failure ->
                             throw new OrderProcessingException(failure.message());
                     case ServiceCallResult.Degraded<ProductDto> degraded -> {
-                        isFullyReserved.set(false);
                         log.warn("Каталог недоступен ({}): товар с id {} будет проверен при подтверждении",
                                 degraded.reason(), productId);
+                        degradedProductIds.add(productId);
                     }
                 }
             });
@@ -150,6 +150,9 @@ public class OrderOrchestrationService {
                     isFullyReserved.set(false);
                 }
             });
+            if (!degradedProductIds.isEmpty()) {
+                isFullyReserved.set(false);
+            }
             List<OrderItemRequest> itemsSnapshotList = request.items()
                     .stream()
                     .map(itemRequest -> getSnapshot(itemRequest,
