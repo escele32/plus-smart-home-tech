@@ -12,6 +12,7 @@ import ru.yandex.practicum.order.dto.OrderDto;
 import ru.yandex.practicum.order.dto.OrderItemRequest;
 import ru.yandex.practicum.order.exception.InventoryServiceUnavailableException;
 import ru.yandex.practicum.order.exception.OrderProcessingException;
+import ru.yandex.practicum.order.exception.ProductServiceUnavailableException;
 import ru.yandex.practicum.order.feign.*;
 
 import java.math.BigDecimal;
@@ -43,6 +44,9 @@ public class OrderOrchestrationService {
         } catch (FeignException.NotFound exception) {
             log.warn("Товар с id {} не найден", productId);
             return new ServiceCallResult.Failure<>(format("Товар с id %d не найден", productId));
+        } catch (ProductServiceUnavailableException exception) {
+            log.warn("Каталог недоступен: {}", exception.getMessage());
+            return new ServiceCallResult.Degraded<>("Каталог недоступен");
         } catch (FeignException exception) {
             log.warn("Не удалось получить данные товара c id {}", productId);
             return new ServiceCallResult.Degraded<>(format("Не удалось получить данные товара c id %d", productId));
