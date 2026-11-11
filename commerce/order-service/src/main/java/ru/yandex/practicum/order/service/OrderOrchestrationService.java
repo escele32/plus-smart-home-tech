@@ -12,9 +12,9 @@ import ru.yandex.practicum.order.dto.OrderDto;
 import ru.yandex.practicum.order.dto.OrderItemRequest;
 import ru.yandex.practicum.order.exception.InventoryServiceUnavailableException;
 import ru.yandex.practicum.order.exception.OrderProcessingException;
-import ru.yandex.practicum.order.exception.ProductServiceUnavailableException;
 import ru.yandex.practicum.order.feign.*;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -43,9 +43,6 @@ public class OrderOrchestrationService {
         } catch (FeignException.NotFound exception) {
             log.warn("Товар с id {} не найден", productId);
             return new ServiceCallResult.Failure<>(format("Товар с id %d не найден", productId));
-        } catch (ProductServiceUnavailableException exception) {
-            log.warn("Каталог не доступен");
-            return new ServiceCallResult.Degraded<>("Каталог не доступен");
         } catch (FeignException exception) {
             log.warn("Не удалось получить данные товара c id {}", productId);
             return new ServiceCallResult.Degraded<>(format("Не удалось получить данные товара c id %d", productId));
@@ -79,16 +76,6 @@ public class OrderOrchestrationService {
         }
     }
 
-    private ProductDto requireProduct(Long productId) {
-        ServiceCallResult<ProductDto> result = getProduct(productId);
-        return switch (result) {
-            case ServiceCallResult.Success<ProductDto> success -> success.value();
-            case ServiceCallResult.Failure<ProductDto> failure -> throw new OrderProcessingException(failure.message());
-            case ServiceCallResult.Degraded<ProductDto> degraded ->
-                    throw new ProductServiceUnavailableException(degraded.reason());
-        };
-    }
-
     private boolean reserve(InventoryRequest request, List<InventoryRequest> reserved) {
         ServiceCallResult<InventoryResponse> result = getReserve(request);
         return switch (result) {
@@ -117,6 +104,11 @@ public class OrderOrchestrationService {
     }
 
     private OrderItemRequest getSnapshot(OrderItemRequest itemDto, ProductDto productDto) {
+        if (productDto == null) {
+            // каталог деградировал: сохраняем как есть, цена 0, данные доуточним при подтверждении
+            return new OrderItemRequest(itemDto.productId(), itemDto.productName(), itemDto.quantity(),
+                    itemDto.price() != null ? itemDto.price() : BigDecimal.ZERO);
+        }
         return new OrderItemRequest(itemDto.productId(), productDto.name(), itemDto.quantity(), productDto.price());
     }
 
@@ -133,7 +125,20 @@ public class OrderOrchestrationService {
         List<InventoryRequest> reserveList = new ArrayList<>();
         AtomicBoolean isFullyReserved = new AtomicBoolean(true);
         try {
-            quantityMap.keySet().forEach(productId -> productMap.put(productId, requireProduct(productId)));
+            quantityMap.forEach((productId, quantity) -> {
+                ServiceCallResult<ProductDto> productResult = getProduct(productId);
+                switch (productResult) {
+                    case ServiceCallResult.Success<ProductDto> success ->
+                            productMap.put(productId, success.value());
+                    case ServiceCallResult.Failure<ProductDto> failure ->
+                            throw new OrderProcessingException(failure.message());
+                    case ServiceCallResult.Degraded<ProductDto> degraded -> {
+                        isFullyReserved.set(false);
+                        log.warn("Каталог недоступен ({}): товар с id {} будет проверен при подтверждении",
+                                degraded.reason(), productId);
+                    }
+                }
+            });
             quantityMap.forEach((productId, quantity) -> {
                 if (!reserve(new InventoryRequest(productId, quantity), reserveList)) {
                     isFullyReserved.set(false);
