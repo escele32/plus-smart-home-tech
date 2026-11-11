@@ -25,12 +25,13 @@ import static java.lang.String.format;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class OrderServiceImpl implements OrderService {
-    static String CONFIRMED = "CONFIRMED";
+    static final String CONFIRMED = "CONFIRMED";
+    static final String PENDING_CONFIRMATION = "PENDING_CONFIRMATION";
     OrderRepository repository;
 
     @Override
     @Transactional
-    public OrderDto create(CreateOrderRequest request) {
+    public OrderDto create(CreateOrderRequest request, boolean isFullyReserved) {
         log.debug("Добавление заказа {}", request);
         BigDecimal totalPrice = request.items().stream()
                 .map(item -> item.price().multiply(BigDecimal.valueOf(item.quantity())))
@@ -38,7 +39,8 @@ public class OrderServiceImpl implements OrderService {
         Order order = Order.builder()
                 .customerName(request.customerName())
                 .customerEmail(request.customerEmail())
-                .status(CONFIRMED)
+                .status(isFullyReserved ? CONFIRMED : PENDING_CONFIRMATION)
+                .statusDetails(isFullyReserved ? null : "Заказ требует проверки!")
                 .totalPrice(totalPrice)
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -52,7 +54,7 @@ public class OrderServiceImpl implements OrderService {
                     .build();
             order.getItems().add(item);
         });
-        log.info("Заказ создан {}", order);
+        log.info("Заказ {} создан со статусом {}", order, order.getStatus());
         return OrderMapper.toDto(repository.save(order));
     }
 
