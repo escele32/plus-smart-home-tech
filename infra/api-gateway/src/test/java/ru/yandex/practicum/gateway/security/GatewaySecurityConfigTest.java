@@ -29,21 +29,21 @@ class GatewaySecurityConfigTest {
     WebTestClient webTestClient;
 
     @Test
-    void catalogGet_isPublic() {
+    void productsGet_public() {
         webTestClient.get().uri("/api/products")
                 .exchange()
                 .expectStatus().isOk();
     }
 
     @Test
-    void orderCreate_withoutCredentials_isUnauthorized() {
+    void ordersPost_noAuth_401() {
         webTestClient.post().uri("/api/orders")
                 .exchange()
                 .expectStatus().isUnauthorized();
     }
 
     @Test
-    void productWrite_withUserCredentials_isForbidden() {
+    void productPatch_user_403() {
         webTestClient.patch().uri("/api/products/1")
                 .header(HttpHeaders.AUTHORIZATION, basic("ivan", "ivan"))
                 .exchange()
@@ -51,7 +51,7 @@ class GatewaySecurityConfigTest {
     }
 
     @Test
-    void productWrite_withAdminCredentials_passesSecurity() {
+    void ordersGet_admin_ok() {
         webTestClient.get().uri("/api/orders")
                 .header(HttpHeaders.AUTHORIZATION, basic("anna", "anna"))
                 .exchange()
@@ -59,7 +59,7 @@ class GatewaySecurityConfigTest {
     }
 
     @Test
-    void unknownRoute_withAdminCredentials_isForbidden() {
+    void unknownGet_admin_403() {
         webTestClient.get().uri("/api/unknown")
                 .header(HttpHeaders.AUTHORIZATION, basic("anna", "anna"))
                 .exchange()
@@ -67,7 +67,7 @@ class GatewaySecurityConfigTest {
     }
 
     @Test
-    void corsPreflight_isPublic() {
+    void corsOptions_public() {
         webTestClient.options().uri("/api/orders")
                 .header(HttpHeaders.ORIGIN, "http://localhost:3000")
                 .header("Access-Control-Request-Method", "POST")
