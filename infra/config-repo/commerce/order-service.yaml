@@ -13,3 +13,40 @@ spring:
   sql:
     init:
       mode: never
+  cloud:
+    open-feign:
+      client:
+        config:
+          inventory-service: # название сервиса в @FeignClient
+            connectTimeout: 1000
+            readTimeout: 2000
+            loggerLevel: basic
+          product-service:
+            connectTimeout: 1000
+            readTimeout: 2000
+            loggerLevel: basic
+      circuit-breaker:
+        enabled: true
+      load-balancer:
+        retry:
+          enabled: true
+          max-retries-on-same-service-instance: 0
+          max-retries-on-next-service-instance: 1
+
+resilience4j:
+  circuit-breaker:
+    configs:
+      default:
+        sliding-window-size: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+  time-limiter:
+    configs:
+      default:
+        timeout-duration: 3s
+
+logging:
+  level:
+    ru.yandex.practicum.order.feign.InventoryClient: DEBUG
+    ru.yandex.practicum.order.feign.ProductClient: DEBUG

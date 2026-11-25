@@ -5,4 +5,5 @@ public class ApiPath {
     public static final String INVENTORY = "/inventory";
     public static final String PRODUCT_ID = "/{productId}";
     public static final String RESERVE = "/reserve";
+    public static final String RELEASE = "/release";
 }
